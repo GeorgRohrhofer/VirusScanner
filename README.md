@@ -1,1 +1,1 @@
-# VirusScanner
+# ICVS – Inefficient ClamAV Scanner
