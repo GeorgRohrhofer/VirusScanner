@@ -1,7 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'libclamav/clamav.dart';
 
 void main() async{
+  if (kIsWeb || (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS)){
+    return;
+  }
+
   final result = await clamAVInstalled();
 
   if (!result){
