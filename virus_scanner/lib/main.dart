@@ -13,6 +13,9 @@ void main() async{
   if (!result){
     return;
   }
+
+  debugPrint('${await scanFile('C:\\Users\\georg\\Documents\\Software\\git\\VirusScanner\\eicar.com')}');
+
   runApp(const MyApp());
 }
 

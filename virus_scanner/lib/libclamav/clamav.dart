@@ -38,32 +38,44 @@ Future<bool> updateDatabase() async{
   }
 }
 
+/// Scan a single file.
+/// Returns true if a virus is detected, otherwise false
+/// Raises an Exception if scan failes
 Future<bool> scanFile(String filePath) async{
   final result = await Process.run('clamscan', [filePath]);
 
   if (result.exitCode == 0){
-    return true;
+    return false;
   }
   else if (result.exitCode == 1) {
-    return false;
+    return true;
   }  
   else {
     throw Exception('Error while scanning: ${result.stderr}');
   }
 } 
 
+/// Scan the files in this and all subdirectories.
+/// Returns a list of filepaths
 Future<List<String>> scanMultipleFiles(String rootPath) async {
-  var result = <String>[];
-
-  final processResult = await Process.run('clamscan', ['--recursive', rootPath]);
+  final processResult = await Process.run('clamscan', ['--recursive', '-i', rootPath]);
 
   if (processResult.exitCode != 0 && processResult.exitCode != 1){
     throw Exception('Error while scanning: ${processResult.stderr}');
   }
 
-  //TODO: Filter output to return infected files
+  if(processResult.stdout is String){
+    String output = processResult.stdout;
+    final lines = output.split('\n');
 
-  return result;
+    final pathRegex = RegExp(r'([a-zA-Z]:\\[^\s]+|\/[^\s]+)');
+
+    final pathLines = lines.where((line) => pathRegex.hasMatch(line)).toList();
+
+    return pathLines; 
+  }
+
+  throw TypeError();
 }
 
 Future<List<String>> scanMemory(ScanMemoryOptions option) async {
@@ -85,6 +97,16 @@ Future<List<String>> scanMemory(ScanMemoryOptions option) async {
     throw Exception('Error while scanning memory with option $option: ${processResult.stderr}');
   } 
 
-  //TODO: Filter output to return infected memory items
-  return <String>[];
+  if(processResult.stdout is String){
+    String output = processResult.stdout;
+    final lines = output.split('\n');
+
+    final pathRegex = RegExp(r'([a-zA-Z]:\\[^\s]+|\/[^\s]+)');
+
+    final pathLines = lines.where((line) => pathRegex.hasMatch(line)).toList();
+
+    return pathLines; 
+  }
+
+  throw TypeError();
 }
