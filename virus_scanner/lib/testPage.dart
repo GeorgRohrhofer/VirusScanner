@@ -12,17 +12,45 @@ class ScannerPage extends StatefulWidget {
 }
 
 class _ScannerPageState extends State<ScannerPage> {
-  String _status = "Idle";
+  String _statusFile = "Idle";
+  String _statusFolder = "Idle";
 
   Future<void> _scanFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles();
 
     if (result?.files.single.path != null) {
       final path = result!.files.single.path!;
-      setState(() => _status = "Scanning: $path");
+      setState(() => _statusFile = "Scanning: $path");
 
       final virus = await scanFile(path);
-      setState(() => _status = virus ? "Virus detected!" : "Clean");
+      setState(() => _statusFile = virus ? "Virus detected!" : "Clean");
+    }
+  }
+
+  Future<void> _scanFolder() async {
+    String? path = await FilePicker.platform.getDirectoryPath();
+
+    if (path != null)
+    {
+      setState(() => _statusFolder = "Scanning: $path");
+
+      final virus = await scanMultipleFiles(path);
+
+      String result;
+      if (virus.isEmpty)
+      {
+        result = 'No Viruses Detected';
+      }
+      else
+      {
+        result = '';
+
+        for (var line in virus) {
+          result = '$result\n$line';
+        }
+        
+      }
+      setState(() => _statusFolder = result);
     }
   }
 
@@ -35,8 +63,14 @@ class _ScannerPageState extends State<ScannerPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(onPressed: _scanFile, child: const Text("Scan File")),
+            const SizedBox(height: 5),
+            Text("Status: $_statusFile"),
+
             const SizedBox(height: 20),
-            Text("Status: $_status"),
+
+            ElevatedButton(onPressed: _scanFolder, child: const Text("Scan Folder")),
+            const SizedBox(height: 5),
+            Text("Status: $_statusFolder"),
           ],
         ),
       ),
