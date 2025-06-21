@@ -43,3 +43,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Random Auto generierte Datein
+virus_scanner/linux/flutter/generated_plugin_registrant.cc
+virus_scanner/linux/flutter/generated_plugin_registrant.h
+virus_scanner/linux/flutter/generated_plugins.cmake
+virus_scanner/macos/Flutter/GeneratedPluginRegistrant.swift
+virus_scanner/windows/flutter/generated_plugin_registrant.cc
+virus_scanner/windows/flutter/generated_plugin_registrant.h
+virus_scanner/windows/flutter/generated_plugins.cmake
