@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'libclamav/clamav.dart';
-import 'testPage.dart';
+import 'test_page.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
