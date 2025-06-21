@@ -14,7 +14,9 @@ void main() async{
     return;
   }
 
-  debugPrint('${await scanFile('C:\\Users\\georg\\Documents\\Software\\git\\VirusScanner\\eicar.com')}');
+  debugPrint('Starting Scan...');
+  debugPrint('Virus detected: ${await scanFile('..\\eicar.com')}');
+  debugPrint('Scan finished!');
 
   runApp(const MyApp());
 }
