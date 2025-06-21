@@ -2,8 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'libclamav/clamav.dart';
+import 'testPage.dart';
 
 void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+
   if (kIsWeb || (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS)){
     return;
   }
@@ -57,6 +60,9 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            ElevatedButton(
+              onPressed: () {Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ScannerPage()));},
+              child: const Text('Scanner Page')),
           ],
         ),
       ),// This trailing comma makes auto-formatting nicer for build methods.
