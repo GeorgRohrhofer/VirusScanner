@@ -5,7 +5,9 @@ enum ScanMemoryOptions {
   none, 
   kill,
   unload
-}
+} 
+
+Process? _process;
 
 Future<bool> clamAVInstalled() async {
   try {
@@ -83,17 +85,25 @@ Future<List<String>> scanMultipleFiles(String rootPath) async {
 /// Returns a list of filepaths of infected files.
 /// [onUpdate] - This function should is called, if a new line is added. Use this function to react to changes in output.
 Future<List<String>> scanMultipleFilesLive(String rootPath, List<String> outputLines, void Function() onUpdate) async {
-  final process = await Process.start('clamscan', ['--recursive', rootPath]);
+  _process = await Process.start('clamscan', ['--recursive', rootPath]); 
 
-  process.stdout.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
+  _process!.stdout.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
     outputLines.add(line);
     onUpdate();
   });
 
-  await process.exitCode;
+  await _process!.exitCode;
 
   final pathLines = outputLines.where((line) => line.contains('FOUND')).map((line) => line.split(':').first).toList();
   return pathLines; 
+}
+
+bool stopLiveScanProcess(){
+  if (_process != null && _process!.kill()){
+    _process = null;
+    return true;
+  } 
+  return false;
 }
 
 Future<List<String>> scanMemory(ScanMemoryOptions option) async {
