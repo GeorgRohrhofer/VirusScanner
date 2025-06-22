@@ -98,6 +98,8 @@ Future<List<String>> scanMultipleFilesLive(String rootPath, List<String> outputL
   return pathLines; 
 }
 
+/// Stop live scanning process (scanMultipleFilesLive)
+/// returns true if process was terminated successfully, else false.
 bool stopLiveScanProcess(){
   if (_process != null && _process!.kill()){
     _process = null;
