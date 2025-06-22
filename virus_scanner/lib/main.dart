@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:virus_scanner/json_reader_and_filepicker/filereader.dart';
 import 'package:virus_scanner/json_reader_and_filepicker/scan_history.dart';
 import 'dart:io';
 import 'libclamav/clamav.dart';
@@ -82,6 +83,23 @@ class _MyHomePageState extends State<MyHomePage> {
   bool scanActive = false;
   String scanHistory = '';
   String activeScan = '';
+  JsonFileStorage fileReader = JsonFileStorage('scan_history.json');
+  final ScrollController _scanHistoryHorizontalController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadScanHistory();
+  }
+
+  void loadScanHistory() async {
+    List<ScanHistory> scanHistoryList = await fileReader.readScanHistoryList();
+
+    for (var historyElement in scanHistoryList) {
+      addToScanHistory(historyElement);
+    }
+  }
 
   void fileButtonPressed() {
     debugPrint('File Button Pressed');
@@ -170,15 +188,25 @@ class _MyHomePageState extends State<MyHomePage> {
     String scanPath = currentScanPath;
     final virus = await scanFile(scanPath);
     debugPrint('scan result: $virus');
+
+    addToScanHistory(
+      ScanHistory(
+        inputPath: scanPath,
+        date: DateTime.now(),
+        wasInfected: virus,
+      ),
+    );
   }
 
   void _scanDirectory() async {
     String scanPath = currentScanPath;
     final virus = await scanMultipleFiles(scanPath);
+    bool wasInfected = true;
 
     String result;
     if (virus.isEmpty) {
       result = 'No Viruses Detected';
+      wasInfected = false;
     } else {
       result = '';
       for (var line in virus) {
@@ -186,11 +214,27 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     }
     debugPrint('Scan Result: $result');
+
+    addToScanHistory(
+      ScanHistory(
+        inputPath: scanPath,
+        date: DateTime.now(),
+        wasInfected: wasInfected,
+      ),
+    );
   }
 
   void _scanMemory() async {
     final List<String> results = await scanMemory(ScanMemoryOptions.none);
     debugPrint('Scan Result: $results');
+
+    addToScanHistory(
+      ScanHistory(
+        inputPath: 'Memory',
+        date: DateTime.now(),
+        wasInfected: results.isNotEmpty,
+      ),
+    );
   }
 
   void makeLightMode() {
@@ -236,11 +280,18 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void addToScanHistory(ScanHistory newElement) {
-    scanHistory = '$newElement\n$scanHistory';
+    setState(() {
+      scanHistory = '$newElement\n$scanHistory';
+    });
+
+    fileReader.appendScanHistory(newElement);
   }
 
   void clearScanHistory() {
-    scanHistory = '';
+    setState(() {
+      scanHistory = '';
+    });
+    fileReader.clearFile();
   }
 
   @override
@@ -248,7 +299,9 @@ class _MyHomePageState extends State<MyHomePage> {
     Color buttonBackground = Theme.of(context).colorScheme.inversePrimary;
     Color buttonBackgroundPressed = Theme.of(context).colorScheme.primary;
     Color buttonForeGround = Theme.of(context).colorScheme.primary;
-    Color buttonForeGroundPressed = Theme.of(context).colorScheme.inversePrimary;
+    Color buttonForeGroundPressed = Theme.of(
+      context,
+    ).colorScheme.inversePrimary;
     Color boxBorderColor = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
@@ -372,7 +425,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           border: Border.all(color: boxBorderColor),
                           borderRadius: BorderRadius.circular(5),
                         ),
-                        child: SingleChildScrollView(child: Text(scanHistory)),
+                        child: SingleChildScrollView(child: Text(activeScan)),
                       ),
                     ),
                   ),
@@ -394,7 +447,18 @@ class _MyHomePageState extends State<MyHomePage> {
                         border: Border.all(color: boxBorderColor),
                         borderRadius: BorderRadius.circular(5),
                       ),
-                      child: SingleChildScrollView(child: Text(scanHistory)),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: Scrollbar(
+                          thumbVisibility: true,
+                          controller: _scanHistoryHorizontalController,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            controller: _scanHistoryHorizontalController,
+                            child: Text(scanHistory),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   Padding(
@@ -406,8 +470,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         child: SizedBox(
                           width: 40,
                           child: ElevatedButton(
-                            onPressed: () =>
-                                debugPrint('Clear History Button Pressed'),
+                            onPressed: () => clearScanHistory(),
                             style: ElevatedButton.styleFrom(
                               padding: EdgeInsets.zero,
                               alignment: Alignment.center,

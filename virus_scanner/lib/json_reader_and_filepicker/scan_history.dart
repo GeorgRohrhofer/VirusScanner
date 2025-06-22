@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:intl/intl.dart';
 
 part 'scan_history.g.dart';
 
@@ -17,12 +18,13 @@ class ScanHistory {
 
   @override
   String toString() {
+    final formattedDate = DateFormat('dd.MM.yyyy HH:mm:ss').format(date);
     if (wasInfected){
-      return '$date | $inputPath | ⚠️)';
+      return '⚠️ | $formattedDate | $inputPath';
     }
     else
     {
-      return '$date | $inputPath | ✅)';
+      return '✅ | $formattedDate | $inputPath';
     }
     
   }

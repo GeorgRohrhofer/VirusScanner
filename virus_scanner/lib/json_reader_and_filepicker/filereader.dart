@@ -64,6 +64,28 @@ class JsonFileStorage
     }
   }
 
+  Future<void> appendScanHistory(ScanHistory newScanHistoryElement) async 
+  {
+    try 
+    {
+      final file = await _localFile;
+      if (!await file.exists()) 
+      {
+        await createFileIfNotExists();
+      }
+
+      final content = await file.readAsString();
+      final List<dynamic> jsonList = json.decode(content);
+      jsonList.add(newScanHistoryElement.toJson());
+
+      await file.writeAsString(json.encode(jsonList));
+    } 
+    catch (e) 
+    {
+      debugPrint('Error appending to JSON file: $e');
+    }
+  }
+
   Future<void> clearFile() async 
   {
     try 
