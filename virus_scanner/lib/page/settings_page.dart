@@ -7,16 +7,16 @@ class SettingsPage extends StatefulWidget {
   final ValueChanged<Settings> onSettingsChanged;
 
   const SettingsPage({
-    Key? key,
+    super.key,
     required this.initialSettings,
     required this.onSettingsChanged,
-  }) : super(key: key);
+  });
 
   @override
-  _SettingsPageState createState() => _SettingsPageState();
+  SettingsPageState createState() => SettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class SettingsPageState extends State<SettingsPage> {
   late bool switchLightAndDarkMode;
   late Color themeColor;
   late String language;
@@ -88,7 +88,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     showColorName: true,
                     showColorCode: true,
                   );
-                  if (picked != null && picked != themeColor) {
+                  if (picked != themeColor) 
+                  {
                     setState(() {
                       themeColor = picked;
                     });
