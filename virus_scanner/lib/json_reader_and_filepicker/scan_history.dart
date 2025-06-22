@@ -8,7 +8,8 @@ class ScanHistory {
   final DateTime date;
   final bool wasInfected;
 
-  ScanHistory({
+  ScanHistory(
+  {
     required this.inputPath,
     required this.date,
     required this.wasInfected,

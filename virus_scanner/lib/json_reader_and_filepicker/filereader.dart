@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter/foundation.dart'; // für debugPrint
+import 'package:flutter/foundation.dart';
+import 'scan_history.dart';
 
-class JsonFileStorage {
+class JsonFileStorage 
+{
   final String filename;
 
   JsonFileStorage(this.filename);
@@ -16,48 +18,64 @@ class JsonFileStorage {
   Future<void> createFileIfNotExists() async {
     final file = await _localFile;
     if (!await file.exists()) {
-      // Leere JSON-Liste schreiben
       await file.writeAsString(json.encode([]));
     }
   }
 
-  /// JSON-Datei lesen und als Liste von Maps zurückgeben
-  Future<List<Map<String, dynamic>>> readJson() async {
+  /// Liste von ScanHistory lesen
+  Future<List<ScanHistory>> readScanHistoryList() async 
+  {
     try {
       final file = await _localFile;
 
-      if (!await file.exists()) {
-        await createFileIfNotExists(); // Wenn Datei nicht existiert, anlegen
+      if (!await file.exists()) 
+      {
+        await createFileIfNotExists();
       }
 
       final content = await file.readAsString();
+
       final List<dynamic> jsonList = json.decode(content);
-      return jsonList.cast<Map<String, dynamic>>();
-    } catch (e) {
+
+      return jsonList
+          .map((item) => ScanHistory.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } 
+    catch (e) 
+    {
       debugPrint('Error reading JSON file: $e');
       return [];
     }
   }
 
-  /// Liste von JSON-Objekten (Maps) in Datei schreiben
-  Future<void> writeJson(List<Map<String, dynamic>> dataList) async {
-    try {
+  /// Liste von ScanHistory schreiben
+  Future<void> writeScanHistoryList(List<ScanHistory> dataList) async
+  {
+    try 
+    {
       final file = await _localFile;
-      final jsonString = json.encode(dataList);
+      final jsonList = dataList.map((e) => e.toJson()).toList();
+      final jsonString = json.encode(jsonList);
       await file.writeAsString(jsonString);
-    } catch (e) {
+    } 
+    catch (e) 
+    {
       debugPrint('Error writing JSON file: $e');
     }
   }
 
-  /// Datei leeren (leere Liste schreiben)
-  Future<void> clearFile() async {
-    try {
+  Future<void> clearFile() async 
+  {
+    try 
+    {
       final file = await _localFile;
-      if (await file.exists()) {
+      if (await file.exists()) 
+      {
         await file.writeAsString(json.encode([]));
       }
-    } catch (e) {
+    } 
+    catch (e) 
+    {
       debugPrint('Error clearing file: $e');
     }
   }
