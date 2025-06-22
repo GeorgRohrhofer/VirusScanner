@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'settingsclass.dart'; // Make sure this contains your Settings class with fromJson/toJson
+import 'settingsclass.dart';
 
 class SettingsFileStorage {
   final String filename;
@@ -17,10 +17,9 @@ class SettingsFileStorage {
   Future<void> createFileIfNotExists() async {
     final file = await _localFile;
     if (!await file.exists()) {
-      // Write a default Settings JSON structure
       final defaultSettings = Settings(
         switchLightAndDarkMode: false,
-        themeColor: const Color.fromARGB(0, 255, 255, 255),
+        themeColor: const Color(0xFF2196F3), // default blue color
         language: 'en',
         historyPath: '',
       );
@@ -28,7 +27,6 @@ class SettingsFileStorage {
     }
   }
 
-  /// Read Settings object from file
   Future<Settings?> readSettings() async {
     try {
       final file = await _localFile;
@@ -46,7 +44,6 @@ class SettingsFileStorage {
     }
   }
 
-  /// Write Settings object to file
   Future<void> writeSettings(Settings settings) async {
     try {
       final file = await _localFile;
@@ -57,7 +54,6 @@ class SettingsFileStorage {
     }
   }
 
-  /// Clear settings file (write default settings)
   Future<void> clearFile() async {
     try {
       final file = await _localFile;

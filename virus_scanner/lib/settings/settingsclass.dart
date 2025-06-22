@@ -25,16 +25,11 @@ class Settings {
 
   Map<String, dynamic> toJson() => _$SettingsToJson(this);
 
-  static Color _colorFromHex(String hexString) 
-  {
+  static Color _colorFromHex(String hexString) {
     final buffer = StringBuffer();
-
     if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
-
     hexString = hexString.replaceFirst('#', '');
-
     buffer.write(hexString);
-
     return Color(int.parse(buffer.toString(), radix: 16));
   }
 

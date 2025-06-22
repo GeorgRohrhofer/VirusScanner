@@ -6,6 +6,9 @@ import 'package:virus_scanner/json_reader_and_filepicker/scan_history.dart';
 import 'dart:io';
 import 'libclamav/clamav.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:virus_scanner/page/settings_page.dart';
+import 'package:virus_scanner/settings/settings_file_reader.dart';
+import 'package:virus_scanner/settings/settingsclass.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -85,12 +88,15 @@ class _MyHomePageState extends State<MyHomePage> {
   String scanHistory = '';
   String activeScan = '';
   JsonFileStorage fileReader = JsonFileStorage('scan_history.json');
+  SettingsFileStorage settingsReader = SettingsFileStorage('settings.json');
   final ScrollController _scanHistoryHorizontalController = ScrollController();
+
+  Settings? settings;
 
   @override
   void initState() {
     super.initState();
-
+    loadSettings();
     loadScanHistory();
   }
 
@@ -101,6 +107,27 @@ class _MyHomePageState extends State<MyHomePage> {
       addToScanHistory(historyElement);
     }
   }
+
+  Future<void> loadSettings() async 
+  {
+    final loadedSettings = await settingsReader.readSettings();
+    setState(() {
+    settings = loadedSettings;
+
+    final Color seedColor = settings!.themeColor;
+
+    widget.changeTheme(
+      ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: seedColor,
+          brightness: settings!.switchLightAndDarkMode
+              ? Brightness.dark
+              : Brightness.light,
+        ),
+      ),
+    );
+  });
+}
 
   void fileButtonPressed() {
     debugPrint('File Button Pressed');
@@ -128,13 +155,31 @@ class _MyHomePageState extends State<MyHomePage> {
   void settingsButtonPressed() {
     debugPrint('Settings Button Pressed');
 
-    if (darkLightMode == Brightness.light) {
-      makeDarkMode();
-      darkLightMode = Brightness.dark;
-    } else {
-      makeLightMode();
-      darkLightMode = Brightness.light;
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SettingsPage(
+          initialSettings: settings!,
+          onSettingsChanged: (newSettings) async {
+            await settingsReader.writeSettings(newSettings);
+            setState(() {
+              settings = newSettings;
+            });
+
+            widget.changeTheme(
+              ThemeData(
+                colorScheme: ColorScheme.fromSeed(
+                  seedColor: newSettings.themeColor,
+                  brightness: newSettings.switchLightAndDarkMode
+                      ? Brightness.dark
+                      : Brightness.light,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   void pathButtonPressed() async {
