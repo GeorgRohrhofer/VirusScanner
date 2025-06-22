@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart'; // für debugPrint
 
@@ -14,49 +13,49 @@ class JsonFileStorage {
     return File('${directory.path}/$filename');
   }
 
-  Future<void> createFileIfNotExists() async
-  {
+  Future<void> createFileIfNotExists() async {
     final file = await _localFile;
     if (!await file.exists()) {
-      // Datei mit leerem JSON-Objekt anlegen
-      await file.writeAsString(json.encode({}));
+      // Leere JSON-Liste schreiben
+      await file.writeAsString(json.encode([]));
     }
   }
 
-  /// JSON-Datei lesen und als Map zurückgeben
-  Future<Map<String, dynamic>?> readJson() async {
+  /// JSON-Datei lesen und als Liste von Maps zurückgeben
+  Future<List<Map<String, dynamic>>> readJson() async {
     try {
       final file = await _localFile;
 
       if (!await file.exists()) {
-        return null; // Datei existiert nicht
+        await createFileIfNotExists(); // Wenn Datei nicht existiert, anlegen
       }
 
       final content = await file.readAsString();
-      return json.decode(content) as Map<String, dynamic>;
+      final List<dynamic> jsonList = json.decode(content);
+      return jsonList.cast<Map<String, dynamic>>();
     } catch (e) {
       debugPrint('Error reading JSON file: $e');
-      return null;
+      return [];
     }
   }
 
-  /// JSON-Daten (Map) in Datei schreiben
-  Future<void> writeJson(Map<String, dynamic> data) async {
+  /// Liste von JSON-Objekten (Maps) in Datei schreiben
+  Future<void> writeJson(List<Map<String, dynamic>> dataList) async {
     try {
       final file = await _localFile;
-      final jsonString = json.encode(data);
+      final jsonString = json.encode(dataList);
       await file.writeAsString(jsonString);
     } catch (e) {
       debugPrint('Error writing JSON file: $e');
     }
   }
 
-  /// Datei leeren (löschen)
+  /// Datei leeren (leere Liste schreiben)
   Future<void> clearFile() async {
     try {
       final file = await _localFile;
       if (await file.exists()) {
-        await file.writeAsString(''); // Dateiinhalt löschen
+        await file.writeAsString(json.encode([]));
       }
     } catch (e) {
       debugPrint('Error clearing file: $e');
