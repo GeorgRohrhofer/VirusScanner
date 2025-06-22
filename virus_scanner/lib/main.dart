@@ -171,6 +171,7 @@ class _MyHomePageState extends State<MyHomePage> {
       MaterialPageRoute(
         builder: (context) => SettingsPage(
           initialSettings: settings!,
+          storage: settingsReader,
           onSettingsChanged: (newSettings) async {
             await settingsReader.writeSettings(newSettings);
             setState(() {

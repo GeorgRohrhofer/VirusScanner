@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'settingsclass.dart';
+import 'package:path/path.dart' as p;
 
 class SettingsFileStorage {
   final String filename;
@@ -17,11 +18,15 @@ class SettingsFileStorage {
   Future<void> createFileIfNotExists() async {
     final file = await _localFile;
     if (!await file.exists()) {
-      final defaultSettings = Settings(
+      final directory = await getApplicationDocumentsDirectory();
+      final defaultHistoryPath = p.join(directory.path, 'scans');
+
+      final defaultSettings = Settings
+      (
         switchLightAndDarkMode: false,
-        themeColor: const Color(0xFF2196F3), // default blue color
+        themeColor: const Color(0xFF2196F3),
         language: 'en',
-        historyPath: '',
+        historyPath: defaultHistoryPath,
       );
       await file.writeAsString(json.encode(defaultSettings.toJson()));
     }

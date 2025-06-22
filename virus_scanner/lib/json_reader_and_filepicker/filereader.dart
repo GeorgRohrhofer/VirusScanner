@@ -7,20 +7,32 @@ import 'package:synchronized/synchronized.dart';
 
 class JsonFileStorage 
 {
-  final String filename;
+  final String fullFilePath;
   final Lock _lock = Lock();
 
-  JsonFileStorage(this.filename);
+  JsonFileStorage(this.fullFilePath);
 
-  Future<File> get _localFile async {
-    final directory = await getApplicationDocumentsDirectory();
-    return File('${directory.path}/$filename');
+  Future<File> get _localFile async 
+  {
+    final file = File(fullFilePath);
+
+    final directory = file.parent;
+
+    if(!await directory.exists())
+    {
+      await directory.create(recursive: true);
+    }
+
+    return file;
   }
 
-  Future<void> createFileIfNotExists() async {
+  Future<void> createFileIfNotExists() async 
+  {
     final file = await _localFile;
-    if (!await file.exists()) {
-      await file.writeAsString(json.encode([]));
+
+    if (!await file.exists()) 
+    {
+      await file.create();
     }
   }
 
@@ -36,7 +48,6 @@ class JsonFileStorage
       }
 
       final content = await file.readAsString();
-
       final List<dynamic> jsonList = json.decode(content);
 
       return jsonList

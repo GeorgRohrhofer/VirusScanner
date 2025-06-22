@@ -1,14 +1,21 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flex_color_picker/flex_color_picker.dart'; // optional color picker package
-import 'package:virus_scanner/settings/settingsclass.dart';  // Your Settings class
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:virus_scanner/settings/settingsclass.dart';
+import 'package:virus_scanner/settings/settings_file_reader.dart';  // Your Settings class
+import 'package:virus_scanner/json_reader_and_filepicker/filereader.dart';  // Your JsonFileStorage class
 
 class SettingsPage extends StatefulWidget {
-  final Settings initialSettings;
+  final Settings? initialSettings;
+  final SettingsFileStorage storage;
   final ValueChanged<Settings> onSettingsChanged;
 
   const SettingsPage({
     super.key,
-    required this.initialSettings,
+    this.initialSettings,
+    required this.storage,
     required this.onSettingsChanged,
   });
 
@@ -17,40 +24,99 @@ class SettingsPage extends StatefulWidget {
 }
 
 class SettingsPageState extends State<SettingsPage> {
-  late bool switchLightAndDarkMode;
-  late Color themeColor;
-  late String language;
-  late TextEditingController historyPathController;
+  bool? switchLightAndDarkMode;
+  Color? themeColor;
+  String? language;
+  bool isLoading = true;
+  TextEditingController? historyPathController;
+
+  late JsonFileStorage scanStorage; // Scan history storage
 
   final List<String> languages = ['en', 'de', 'fr', 'es'];
 
   @override
   void initState() {
     super.initState();
-    switchLightAndDarkMode = widget.initialSettings.switchLightAndDarkMode;
-    themeColor = widget.initialSettings.themeColor;
-    language = widget.initialSettings.language;
-    historyPathController = TextEditingController(text: widget.initialSettings.historyPath);
+    _loadSettings();
   }
 
-  void _saveSettings() {
+  Future<void> _loadSettings() async {
+    final loadedSettings = await widget.storage.readSettings();
+
+    final settings = loadedSettings ??
+        Settings(
+          switchLightAndDarkMode: false,
+          themeColor: Colors.blue,
+          language: 'en',
+          historyPath: '',  // fallback, should not be empty ideally
+        );
+
+    setState(() {
+      switchLightAndDarkMode = settings.switchLightAndDarkMode;
+      themeColor = settings.themeColor;
+      language = settings.language;
+      historyPathController = TextEditingController(text: settings.historyPath);
+      isLoading = false;
+    });
+
+    await _initScanStorage(settings.historyPath);
+  }
+
+  Future<void> _initScanStorage(String historyPath) async {
+    if (historyPath.isEmpty) {
+      debugPrint('History path is empty, scanStorage not initialized.');
+      return;
+    }
+
+    final dir = Directory(historyPath);
+    if (!await dir.exists()) {
+      await dir.create(recursive: true);
+      debugPrint('Scan folder created at: $historyPath');
+    }
+
+   /* final scanHistoryFilePath = p.join(historyPath, 'scan_history.json');
+    scanStorage = JsonFileStorage(scanHistoryFilePath);
+    debugPrint('ScanStorage initialized at: $scanHistoryFilePath'); */
+  }
+
+  Future<void> _saveSettings() async {
+    if (switchLightAndDarkMode == null ||
+        themeColor == null ||
+        language == null ||
+        historyPathController == null) return;
+
     final newSettings = Settings(
-      switchLightAndDarkMode: switchLightAndDarkMode,
-      themeColor: themeColor,
-      language: language,
-      historyPath: historyPathController.text,
+      switchLightAndDarkMode: switchLightAndDarkMode!,
+      themeColor: themeColor!,
+      language: language!,
+      historyPath: historyPathController!.text,
     );
+
+    await widget.storage.writeSettings(newSettings);
     widget.onSettingsChanged(newSettings);
+
+    // Update scanStorage if historyPath changed
+    await _initScanStorage(newSettings.historyPath);
   }
 
   @override
   void dispose() {
-    historyPathController.dispose();
+    historyPathController?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (switchLightAndDarkMode == null ||
+        themeColor == null ||
+        language == null ||
+        historyPathController == null) {
+      return Scaffold(
+        appBar: AppBar(title: Text('Settings')),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Settings'),
@@ -60,10 +126,9 @@ class SettingsPageState extends State<SettingsPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Light/Dark mode switch
             SwitchListTile(
               title: Text('Light/Dark Mode'),
-              value: switchLightAndDarkMode,
+              value: switchLightAndDarkMode!,
               onChanged: (val) {
                 setState(() {
                   switchLightAndDarkMode = val;
@@ -71,25 +136,22 @@ class SettingsPageState extends State<SettingsPage> {
                 _saveSettings();
               },
             ),
-
-            // Color picker
             ListTile(
               title: Text('Theme Color'),
               trailing: ColorIndicator(
                 width: 30,
                 height: 30,
-                color: themeColor,
+                color: themeColor!,
                 onSelect: () async {
                   Color? picked = await showColorPickerDialog(
                     context,
-                    themeColor,
+                    themeColor!,
                     title: const Text('Select Theme Color'),
                     enableShadesSelection: true,
                     showColorName: true,
                     showColorCode: true,
                   );
-                  if (picked != themeColor) 
-                  {
+                  if (picked != themeColor) {
                     setState(() {
                       themeColor = picked;
                     });
@@ -98,8 +160,6 @@ class SettingsPageState extends State<SettingsPage> {
                 },
               ),
             ),
-
-            // Language dropdown
             DropdownButtonFormField<String>(
               decoration: InputDecoration(labelText: 'Language'),
               value: language,
@@ -118,13 +178,11 @@ class SettingsPageState extends State<SettingsPage> {
                 }
               },
             ),
-
-            // History Path input
-            TextFormField(
+            /*TextFormField(
               controller: historyPathController,
               decoration: InputDecoration(labelText: 'History Path'),
               onFieldSubmitted: (_) => _saveSettings(),
-            ),
+            ),*/
           ],
         ),
       ),
