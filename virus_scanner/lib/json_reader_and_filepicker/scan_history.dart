@@ -14,6 +14,18 @@ class ScanHistory {
     required this.wasInfected,
   });
 
+  @override
+  String toString() {
+    if (wasInfected){
+      return '$date | $inputPath | ⚠️)';
+    }
+    else
+    {
+      return '$date | $inputPath | ✅)';
+    }
+    
+  }
+
   factory ScanHistory.fromJson(Map<String, dynamic> json) =>
       _$ScanHistoryFromJson(json);
 
