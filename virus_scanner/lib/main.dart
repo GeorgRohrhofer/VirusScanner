@@ -6,6 +6,12 @@ import 'package:virus_scanner/json_reader_and_filepicker/scan_history.dart';
 import 'dart:io';
 import 'libclamav/clamav.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:win32/win32.dart';
+import 'dart:ffi';
+import 'package:ffi/ffi.dart';
+import 'package:virus_scanner/page/settings_page.dart';
+import 'package:virus_scanner/settings/settings_file_reader.dart';
+import 'package:virus_scanner/settings/settingsclass.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,15 +20,22 @@ void main() async {
   windowManager.setTitle('ICVS - Inefficient ClamAV Scanner');
 
   if (kIsWeb ||
-      (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS)) {
+      !Platform.isWindows) {
     return;
   }
 
   final result = await clamAVInstalled();
 
   if (!result) {
-    return;
+    exit(1);
   }
+
+  if (!isElevated()) {
+    relaunchAsAdmin();
+    exit(0);
+  }
+
+  updateDatabase();
 
   //debugPrint('Starting Scan...');
   //debugPrint('Virus detected: ${await scanFile('..\\eicar.com')}');
@@ -56,6 +69,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: _myTheme,
+      debugShowCheckedModeBanner: false,
       home: MyHomePage(
         title: 'ICVS – Inefficient ClamAV Scanner',
         changeTheme: _changeTheme,
@@ -84,13 +98,16 @@ class _MyHomePageState extends State<MyHomePage> {
   String scanHistory = '';
   String activeScan = '';
   JsonFileStorage fileReader = JsonFileStorage('scan_history.json');
+  SettingsFileStorage settingsReader = SettingsFileStorage('settings.json');
   final ScrollController _scanHistoryHorizontalController = ScrollController();
   ScanMemoryOptions memoryScanOption = ScanMemoryOptions.none;
+
+  Settings? settings;
 
   @override
   void initState() {
     super.initState();
-
+    loadSettings();
     loadScanHistory();
   }
 
@@ -101,6 +118,27 @@ class _MyHomePageState extends State<MyHomePage> {
       addToScanHistory(historyElement);
     }
   }
+
+  Future<void> loadSettings() async 
+  {
+    final loadedSettings = await settingsReader.readSettings();
+    setState(() {
+    settings = loadedSettings;
+
+    final Color seedColor = settings!.themeColor;
+
+    widget.changeTheme(
+      ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: seedColor,
+          brightness: settings!.switchLightAndDarkMode
+              ? Brightness.dark
+              : Brightness.light,
+        ),
+      ),
+    );
+  });
+}
 
   void fileButtonPressed() {
     debugPrint('File Button Pressed');
@@ -128,13 +166,31 @@ class _MyHomePageState extends State<MyHomePage> {
   void settingsButtonPressed() {
     debugPrint('Settings Button Pressed');
 
-    if (darkLightMode == Brightness.light) {
-      makeDarkMode();
-      darkLightMode = Brightness.dark;
-    } else {
-      makeLightMode();
-      darkLightMode = Brightness.light;
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SettingsPage(
+          initialSettings: settings!,
+          onSettingsChanged: (newSettings) async {
+            await settingsReader.writeSettings(newSettings);
+            setState(() {
+              settings = newSettings;
+            });
+
+            widget.changeTheme(
+              ThemeData(
+                colorScheme: ColorScheme.fromSeed(
+                  seedColor: newSettings.themeColor,
+                  brightness: newSettings.switchLightAndDarkMode
+                      ? Brightness.dark
+                      : Brightness.light,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   void pathButtonPressed() async {
@@ -558,4 +614,59 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+}
+
+// Auxiliary Admin functions
+
+base class TOKEN_ELEVATION extends Struct {
+  @Uint32()
+  external int TokenIsElevated;
+}
+
+bool isElevated() {
+  final tokenHandle = calloc<IntPtr>();
+  final elevation = calloc<TOKEN_ELEVATION>();
+  final retLen = calloc<DWORD>();
+
+  try {
+    if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, tokenHandle) == 0) {
+      return false;
+    }
+    if (GetTokenInformation(
+      tokenHandle.value,
+      TokenElevation,
+      elevation.cast(),
+      sizeOf<TOKEN_ELEVATION>(),
+      retLen,
+    ) == 0) {
+      return false;
+    }
+    return elevation.ref.TokenIsElevated != 0;
+  } finally {
+    free(tokenHandle);
+    free(elevation);
+    free(retLen);
+  }
+}
+
+void relaunchAsAdmin() {
+  final executablePath = Platform.resolvedExecutable;
+
+  final lpVerb = TEXT('runas'); 
+  final lpFile = TEXT(executablePath);
+  final lpParameters = nullptr;
+  final lpDirectory = nullptr;
+
+  final result = ShellExecute(
+    NULL,
+    lpVerb,
+    lpFile,
+    lpParameters,
+    lpDirectory,
+    SW_SHOWNORMAL,
+  );
+
+  free(lpVerb);
+  free(lpFile);
+  free(lpParameters);
 }
