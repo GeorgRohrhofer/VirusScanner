@@ -299,10 +299,19 @@ class _MyHomePageState extends State<MyHomePage> {
     final List<String> results = await scanMemory(memoryScanOption);
     debugPrint('Scan Result: $results');
 
+    String actualResults = '';
+    bool isInfected = false;
+    for (var line in results) {
+      if (!line.contains(': OK')){
+        isInfected = true;
+        actualResults = '$actualResults\n$line';
+      }
+    }
+
     ScanHistory scanHistoryData = ScanHistory(
       inputPath: 'Memory',
       date: DateTime.now(),
-      wasInfected: results.isNotEmpty,
+      wasInfected: isInfected,
     );
 
     addToScanHistory(scanHistoryData);
@@ -311,12 +320,7 @@ class _MyHomePageState extends State<MyHomePage> {
       scanActive = false; // Reset scan state after completion
     });
 
-    String ojeDasWirdNedFunktionieren = '';
-    for (var line in results) {
-      ojeDasWirdNedFunktionieren = '$ojeDasWirdNedFunktionieren\n$line';
-    }
-
-    scanFinishedMessageBox(scanHistoryData, ojeDasWirdNedFunktionieren);
+    scanFinishedMessageBox(scanHistoryData, actualResults);
   }
 
   void makeLightMode() {
