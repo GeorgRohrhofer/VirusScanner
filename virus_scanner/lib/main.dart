@@ -30,12 +30,12 @@ void main() async {
     exit(1);
   }
 
-  if (!isElevated()) {
-    relaunchAsAdmin();
-    exit(0);
-  }
+  // if (!isElevated()) {
+  //   relaunchAsAdmin();
+  //   exit(0);
+  // }
 
-  updateDatabase();
+  // updateDatabase();
 
   //debugPrint('Starting Scan...');
   //debugPrint('Virus detected: ${await scanFile('..\\eicar.com')}');
@@ -246,13 +246,19 @@ class _MyHomePageState extends State<MyHomePage> {
     final virus = await scanFile(scanPath);
     debugPrint('scan result: $virus');
 
-    addToScanHistory(
-      ScanHistory(
-        inputPath: scanPath,
-        date: DateTime.now(),
-        wasInfected: virus,
-      ),
+    ScanHistory scanHistoryData = ScanHistory(
+      inputPath: scanPath,
+      date: DateTime.now(),
+      wasInfected: virus,
     );
+
+    addToScanHistory(scanHistoryData);
+
+    setState(() {
+      scanActive = false; // Reset scan state after completion
+    });
+
+    scanFinishedMessageBox(scanHistoryData, null);
   }
 
   void _scanDirectory() async {
@@ -261,7 +267,9 @@ class _MyHomePageState extends State<MyHomePage> {
     bool wasInfected = true;
 
     String result;
-    if (virus.isEmpty) {
+    String bruh = virus[0];
+    debugPrint(bruh);
+    if (bruh == "\r") {
       result = 'No Viruses Detected';
       wasInfected = false;
     } else {
@@ -272,26 +280,43 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     debugPrint('Scan Result: $result');
 
-    addToScanHistory(
-      ScanHistory(
-        inputPath: scanPath,
-        date: DateTime.now(),
-        wasInfected: wasInfected,
-      ),
+    ScanHistory scanHistoryData = ScanHistory(
+      inputPath: scanPath,
+      date: DateTime.now(),
+      wasInfected: wasInfected,
     );
+
+    addToScanHistory(scanHistoryData);
+
+    setState(() {
+      scanActive = false; // Reset scan state after completion
+    });
+
+    scanFinishedMessageBox(scanHistoryData, result);
   }
 
   void _scanMemory() async {
     final List<String> results = await scanMemory(memoryScanOption);
     debugPrint('Scan Result: $results');
 
-    addToScanHistory(
-      ScanHistory(
-        inputPath: 'Memory',
-        date: DateTime.now(),
-        wasInfected: results.isNotEmpty,
-      ),
+    ScanHistory scanHistoryData = ScanHistory(
+      inputPath: 'Memory',
+      date: DateTime.now(),
+      wasInfected: results.isNotEmpty,
     );
+
+    addToScanHistory(scanHistoryData);
+
+    setState(() {
+      scanActive = false; // Reset scan state after completion
+    });
+
+    String ojeDasWirdNedFunktionieren = '';
+    for (var line in results) {
+      ojeDasWirdNedFunktionieren = '$ojeDasWirdNedFunktionieren\n$line';
+    }
+
+    scanFinishedMessageBox(scanHistoryData, ojeDasWirdNedFunktionieren);
   }
 
   void makeLightMode() {
@@ -361,6 +386,40 @@ class _MyHomePageState extends State<MyHomePage> {
     } else {
       return true;
     }
+  }
+
+  void scanFinishedMessageBox(ScanHistory scanData, String? additionalInfo)
+  {
+    String message = '';
+    String moreInfo = '';
+
+    if (additionalInfo != null){
+      moreInfo = additionalInfo;
+    }
+
+    if (scanData.wasInfected) {
+      message = '⚠️ Virus detected in\n${scanData.inputPath}\n$moreInfo';
+    } else {
+      message = '✅ No virus detected in\n${scanData.inputPath}';
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Scan Completed"),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override

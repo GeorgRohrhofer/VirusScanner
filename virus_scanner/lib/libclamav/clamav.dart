@@ -70,6 +70,7 @@ Future<List<String>> scanMultipleFiles(String rootPath) async {
   if(processResult.stdout is String){
     String output = processResult.stdout;
     final lines = output.split('\n');
+    return lines;
 
     final pathRegex = RegExp(r'([a-zA-Z]:\\[^\s]+|\/[^\s]+)');
 
