@@ -12,8 +12,10 @@ class JsonFileStorage
 
   JsonFileStorage(this.filename);
 
-  Future<File> get _localFile async {
+  Future<File> get _localFile async 
+  {
     final directory = await getApplicationDocumentsDirectory();
+    
     return File('${directory.path}/$filename');
   }
 
@@ -36,7 +38,7 @@ class JsonFileStorage
       }
 
       final content = await file.readAsString();
-
+      debugPrint('Content read from file: $content');
       final List<dynamic> jsonList = json.decode(content);
 
       return jsonList

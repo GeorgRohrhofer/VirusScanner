@@ -17,11 +17,14 @@ class SettingsFileStorage {
   Future<void> createFileIfNotExists() async {
     final file = await _localFile;
     if (!await file.exists()) {
-      final defaultSettings = Settings(
+      final directory = await getApplicationDocumentsDirectory();
+
+      final defaultSettings = Settings
+      (
         switchLightAndDarkMode: false,
-        themeColor: const Color(0xFF2196F3), // default blue color
+        themeColor: const Color(0xFF2196F3),
         language: 'en',
-        historyPath: '',
+        historyPath: directory.path,
       );
       await file.writeAsString(json.encode(defaultSettings.toJson()));
     }
