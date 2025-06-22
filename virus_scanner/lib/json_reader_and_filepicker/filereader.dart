@@ -3,10 +3,12 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'scan_history.dart';
+import 'package:synchronized/synchronized.dart';
 
 class JsonFileStorage 
 {
   final String filename;
+  final Lock _lock = Lock();
 
   JsonFileStorage(this.filename);
 
@@ -74,11 +76,15 @@ class JsonFileStorage
         await createFileIfNotExists();
       }
 
-      final content = await file.readAsString();
-      final List<dynamic> jsonList = json.decode(content);
-      jsonList.add(newScanHistoryElement.toJson());
+      await _lock.synchronized(() async
+        {
+          final content = await file.readAsString();
+          final List<dynamic> jsonList = json.decode(content);
+          jsonList.add(newScanHistoryElement.toJson());
 
-      await file.writeAsString(json.encode(jsonList));
+          await file.writeAsString(json.encode(jsonList));
+        }
+      );
     } 
     catch (e) 
     {
