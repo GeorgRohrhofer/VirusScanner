@@ -583,3 +583,58 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+
+// Auxiliary Admin functions
+
+base class TOKEN_ELEVATION extends Struct {
+  @Uint32()
+  external int TokenIsElevated;
+}
+
+bool isElevated() {
+  final tokenHandle = calloc<IntPtr>();
+  final elevation = calloc<TOKEN_ELEVATION>();
+  final retLen = calloc<DWORD>();
+
+  try {
+    if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, tokenHandle) == 0) {
+      return false;
+    }
+    if (GetTokenInformation(
+      tokenHandle.value,
+      TokenElevation,
+      elevation.cast(),
+      sizeOf<TOKEN_ELEVATION>(),
+      retLen,
+    ) == 0) {
+      return false;
+    }
+    return elevation.ref.TokenIsElevated != 0;
+  } finally {
+    free(tokenHandle);
+    free(elevation);
+    free(retLen);
+  }
+}
+
+void relaunchAsAdmin() {
+  final executablePath = Platform.resolvedExecutable;
+
+  final lpVerb = TEXT('runas'); 
+  final lpFile = TEXT(executablePath);
+  final lpParameters = nullptr;
+  final lpDirectory = nullptr;
+
+  final result = ShellExecute(
+    NULL,
+    lpVerb,
+    lpFile,
+    lpParameters,
+    lpDirectory,
+    SW_SHOWNORMAL,
+  );
+
+  free(lpVerb);
+  free(lpFile);
+  free(lpParameters);
+}
