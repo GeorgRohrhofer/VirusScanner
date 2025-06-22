@@ -1,11 +1,16 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:virus_scanner/json_reader_and_filepicker/scan_history.dart';
 import 'dart:io';
 import 'libclamav/clamav.dart';
+import 'package:window_manager/window_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await windowManager.ensureInitialized();
+  windowManager.setTitle('ICVS - Inefficient ClamAV Scanner');
 
   if (kIsWeb ||
       (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS)) {
@@ -75,6 +80,8 @@ class _MyHomePageState extends State<MyHomePage> {
   Brightness darkLightMode = Brightness.light;
   String currentScanPath = '';
   bool scanActive = false;
+  String scanHistory = '';
+  String activeScan = '';
 
   void fileButtonPressed() {
     debugPrint('File Button Pressed');
@@ -138,13 +145,24 @@ class _MyHomePageState extends State<MyHomePage> {
       scanActive = !scanActive;
     });
 
-    if (scanActive)
-    {
-      _scanFile();
-    }
-    else
-    {
+    if (scanActive) {
+      startScan();
+    } else {
       debugPrint('Scan cannot be aborted, lol :(');
+    }
+  }
+
+  void startScan() {
+    switch (currentButtonState) {
+      case ButtonState.file:
+        _scanFile();
+        break;
+      case ButtonState.directory:
+        _scanDirectory();
+        break;
+      case ButtonState.memory:
+        _scanMemory();
+        break;
     }
   }
 
@@ -154,23 +172,25 @@ class _MyHomePageState extends State<MyHomePage> {
     debugPrint('scan result: $virus');
   }
 
-  void scanDirectory() async {
+  void _scanDirectory() async {
     String scanPath = currentScanPath;
     final virus = await scanMultipleFiles(scanPath);
 
     String result;
-    if (virus.isEmpty)
-    {
+    if (virus.isEmpty) {
       result = 'No Viruses Detected';
-    }
-    else
-    {
+    } else {
       result = '';
       for (var line in virus) {
         result = '$result\n$line';
       }
     }
     debugPrint('Scan Result: $result');
+  }
+
+  void _scanMemory() async {
+    final List<String> results = await scanMemory(ScanMemoryOptions.none);
+    debugPrint('Scan Result: $results');
   }
 
   void makeLightMode() {
@@ -215,25 +235,32 @@ class _MyHomePageState extends State<MyHomePage> {
     widget.changeTheme(darkTheme);
   }
 
+  void addToScanHistory(ScanHistory newElement) {
+    scanHistory = '$newElement\n$scanHistory';
+  }
+
+  void clearScanHistory() {
+    scanHistory = '';
+  }
+
   @override
   Widget build(BuildContext context) {
     Color buttonBackground = Theme.of(context).colorScheme.inversePrimary;
     Color buttonBackgroundPressed = Theme.of(context).colorScheme.primary;
     Color buttonForeGround = Theme.of(context).colorScheme.primary;
-    Color buttonForeGroundPressed = Theme.of(
-      context,
-    ).colorScheme.inversePrimary;
+    Color buttonForeGroundPressed = Theme.of(context).colorScheme.inversePrimary;
+    Color boxBorderColor = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-        toolbarHeight: 25,
-        titleTextStyle: TextStyle(
-          fontSize: 15,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-      ),
+      // appBar: AppBar(
+      //   backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      //   title: Text(widget.title),
+      //   toolbarHeight: 25,
+      //   titleTextStyle: TextStyle(
+      //     fontSize: 15,
+      //     color: Theme.of(context).colorScheme.primary,
+      //   ),
+      // ),
       body: Padding(
         padding: const EdgeInsets.only(top: 10),
         child: Row(
@@ -316,7 +343,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   currentButtonState == ButtonState.memory
                       ? SizedBox(height: 14)
                       : currentScanPath.isEmpty
-                      ? const Text('No Path Selected', style: TextStyle(fontSize: 10))
+                      ? const Text(
+                          'No Path Selected',
+                          style: TextStyle(fontSize: 10),
+                        )
                       : Text(currentScanPath, style: TextStyle(fontSize: 10)),
                   SizedBox(height: 10),
                   ElevatedButton(
@@ -336,13 +366,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 42),
-                      child: TextField(
-                        decoration: InputDecoration(
-                          labelText: 'Hier könnte Ihre Werbung stehen!',
-                          border: OutlineInputBorder(),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: boxBorderColor),
+                          borderRadius: BorderRadius.circular(5),
                         ),
-                        expands: true,
-                        maxLines: null,
+                        child: SingleChildScrollView(child: Text(scanHistory)),
                       ),
                     ),
                   ),
@@ -358,13 +388,13 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: Text('Scan History:'),
                   ),
                   Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        labelText: 'Hier könnte Ihre Werbung stehen!',
-                        border: OutlineInputBorder(),
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: boxBorderColor),
+                        borderRadius: BorderRadius.circular(5),
                       ),
-                      expands: true,
-                      maxLines: null,
+                      child: SingleChildScrollView(child: Text(scanHistory)),
                     ),
                   ),
                   Padding(
