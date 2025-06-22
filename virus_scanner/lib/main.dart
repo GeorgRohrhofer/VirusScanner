@@ -294,6 +294,21 @@ class _MyHomePageState extends State<MyHomePage> {
     fileReader.clearFile();
   }
 
+  bool canStartScan(){
+    if (currentButtonState == ButtonState.memory)
+    {
+      return true;
+    }
+
+    if (currentScanPath.isEmpty) {
+      return false;
+    }
+    else
+    {
+      return true;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Color buttonBackground = Theme.of(context).colorScheme.inversePrimary;
@@ -403,7 +418,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       : Text(currentScanPath, style: TextStyle(fontSize: 10)),
                   SizedBox(height: 10),
                   ElevatedButton(
-                    onPressed: () => scanButtonPressed(),
+                    onPressed: canStartScan() ? () => scanButtonPressed() : null,
                     child: scanActive
                         ? const Text('Abort Scan')
                         : const Text('Start Scan'),
