@@ -56,6 +56,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: _myTheme,
+      debugShowCheckedModeBanner: false,
       home: MyHomePage(
         title: 'ICVS – Inefficient ClamAV Scanner',
         changeTheme: _changeTheme,
