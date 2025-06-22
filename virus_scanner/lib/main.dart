@@ -151,7 +151,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _scanFile() async {
     String scanPath = currentScanPath;
     final virus = await scanFile(scanPath);
-    debugPrint('scan result: ' + virus.toString());
+    debugPrint('scan result: $virus');
   }
 
   void scanDirectory() async {
