@@ -69,10 +69,6 @@ class SettingsPageState extends State<SettingsPage> {
     }
 
     final dir = Directory(historyPath);
-    if (!await dir.exists()) {
-      await dir.create(recursive: true);
-      debugPrint('Scan folder created at: $historyPath');
-    }
 
    /* final scanHistoryFilePath = p.join(historyPath, 'scan_history.json');
     scanStorage = JsonFileStorage(scanHistoryFilePath);
