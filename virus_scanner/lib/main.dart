@@ -100,6 +100,7 @@ class _MyHomePageState extends State<MyHomePage> {
   JsonFileStorage fileReader = JsonFileStorage('scan_history.json');
   SettingsFileStorage settingsReader = SettingsFileStorage('settings.json');
   final ScrollController _scanHistoryHorizontalController = ScrollController();
+  ScanMemoryOptions memoryScanOption = ScanMemoryOptions.none;
 
   Settings? settings;
 
@@ -281,7 +282,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _scanMemory() async {
-    final List<String> results = await scanMemory(ScanMemoryOptions.none);
+    final List<String> results = await scanMemory(memoryScanOption);
     debugPrint('Scan Result: $results');
 
     addToScanHistory(
@@ -350,17 +351,14 @@ class _MyHomePageState extends State<MyHomePage> {
     fileReader.clearFile();
   }
 
-  bool canStartScan(){
-    if (currentButtonState == ButtonState.memory)
-    {
+  bool canStartScan() {
+    if (currentButtonState == ButtonState.memory) {
       return true;
     }
 
     if (currentScanPath.isEmpty) {
       return false;
-    }
-    else
-    {
+    } else {
       return true;
     }
   }
@@ -458,23 +456,57 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Column(
                 children: [
                   SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: currentButtonState == ButtonState.memory
-                        ? null
-                        : () => pathButtonPressed(),
-                    child: const Text('Choose Path'),
-                  ),
                   currentButtonState == ButtonState.memory
-                      ? SizedBox(height: 14)
-                      : currentScanPath.isEmpty
-                      ? const Text(
-                          'No Path Selected',
-                          style: TextStyle(fontSize: 10),
+                      ? Column(
+                          children: [
+                            DropdownButton<ScanMemoryOptions>(
+                              value: memoryScanOption,
+                              onChanged: (ScanMemoryOptions? newValue) {
+                                if (newValue != null) {
+                                  setState(() {
+                                    memoryScanOption = newValue;
+                                  });
+                                }
+                              },
+                              items: ScanMemoryOptions.values.map((
+                                ScanMemoryOptions option,
+                              ) {
+                                return DropdownMenuItem<ScanMemoryOptions>(
+                                  value: option,
+                                  child: Text(
+                                    option.toString().split('.').last,
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            SizedBox(height: 8),
+                          ],
                         )
-                      : Text(currentScanPath, style: TextStyle(fontSize: 10)),
-                  SizedBox(height: 10),
+                      : Column(
+                          children: [
+                            ElevatedButton(
+                              onPressed: () => pathButtonPressed(),
+                              child: const Text('Choose Path'),
+                            ),
+                            currentButtonState == ButtonState.memory
+                                ? SizedBox(height: 14)
+                                : currentScanPath.isEmpty
+                                ? const Text(
+                                    'No Path Selected',
+                                    style: TextStyle(fontSize: 10),
+                                  )
+                                : Text(
+                                    currentScanPath,
+                                    style: TextStyle(fontSize: 10),
+                                  ),
+                            SizedBox(height: 10),
+                          ],
+                        ),
+
                   ElevatedButton(
-                    onPressed: canStartScan() ? () => scanButtonPressed() : null,
+                    onPressed: canStartScan()
+                        ? () => scanButtonPressed()
+                        : null,
                     child: scanActive
                         ? const Text('Abort Scan')
                         : const Text('Start Scan'),
