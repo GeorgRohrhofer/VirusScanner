@@ -6,6 +6,9 @@ import 'package:virus_scanner/json_reader_and_filepicker/scan_history.dart';
 import 'dart:io';
 import 'libclamav/clamav.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:win32/win32.dart';
+import 'dart:ffi';
+import 'package:ffi/ffi.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,15 +17,22 @@ void main() async {
   windowManager.setTitle('ICVS - Inefficient ClamAV Scanner');
 
   if (kIsWeb ||
-      (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS)) {
+      !Platform.isWindows) {
     return;
   }
 
   final result = await clamAVInstalled();
 
   if (!result) {
-    return;
+    exit(1);
   }
+
+  if (!isElevated()) {
+    relaunchAsAdmin();
+    exit(0);
+  }
+
+  updateDatabase();
 
   //debugPrint('Starting Scan...');
   //debugPrint('Virus detected: ${await scanFile('..\\eicar.com')}');
@@ -527,4 +537,59 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+}
+
+// Auxiliary Admin functions
+
+base class TOKEN_ELEVATION extends Struct {
+  @Uint32()
+  external int TokenIsElevated;
+}
+
+bool isElevated() {
+  final tokenHandle = calloc<IntPtr>();
+  final elevation = calloc<TOKEN_ELEVATION>();
+  final retLen = calloc<DWORD>();
+
+  try {
+    if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, tokenHandle) == 0) {
+      return false;
+    }
+    if (GetTokenInformation(
+      tokenHandle.value,
+      TokenElevation,
+      elevation.cast(),
+      sizeOf<TOKEN_ELEVATION>(),
+      retLen,
+    ) == 0) {
+      return false;
+    }
+    return elevation.ref.TokenIsElevated != 0;
+  } finally {
+    free(tokenHandle);
+    free(elevation);
+    free(retLen);
+  }
+}
+
+void relaunchAsAdmin() {
+  final executablePath = Platform.resolvedExecutable;
+
+  final lpVerb = TEXT('runas'); 
+  final lpFile = TEXT(executablePath);
+  final lpParameters = nullptr;
+  final lpDirectory = nullptr;
+
+  final result = ShellExecute(
+    NULL,
+    lpVerb,
+    lpFile,
+    lpParameters,
+    lpDirectory,
+    SW_SHOWNORMAL,
+  );
+
+  free(lpVerb);
+  free(lpFile);
+  free(lpParameters);
 }
