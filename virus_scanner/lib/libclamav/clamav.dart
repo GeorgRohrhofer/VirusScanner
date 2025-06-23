@@ -58,6 +58,27 @@ Future<bool> scanFile(String filePath) async{
   }
 } 
 
+Future<bool> scanFileLive(String filepath, List<String> outputLines, void Function() onUpdate) async {
+  _process = await Process.start('clamscan', [filepath]);
+
+  _process!.stdout.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
+    outputLines.add(line);
+    onUpdate();
+  });
+
+  var exitCode = await _process!.exitCode;
+
+  if (exitCode == 0){
+    return false;
+  }
+  else if (exitCode == 1){
+    return true;
+  }
+  else{
+    throw Exception('Error while scanning');
+  }
+}
+
 /// Scan the files in this and all subdirectories.
 /// Returns a list of filepaths
 Future<List<String>> scanMultipleFiles(String rootPath) async {
@@ -140,4 +161,28 @@ Future<List<String>> scanMemory(ScanMemoryOptions option) async {
   }
 
   throw TypeError();
+}
+
+Future<List<String>> scanMemoryLive(ScanMemoryOptions option, List<String> outputLines, onUpdate) async {
+  switch (option)
+  {
+    case ScanMemoryOptions.none:  
+      _process = await Process.start('clamscan', ['--memory']);
+
+    case ScanMemoryOptions.kill:
+      _process = await Process.start('clamscan', ['--memory', '--kill']);
+
+    case ScanMemoryOptions.unload:
+      _process = await Process.start('clamscan', ['--memory', '--unload']);
+  }
+
+  _process!.stdout.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
+    outputLines.add(line);
+    onUpdate();
+  });
+
+  await _process!.exitCode;
+
+  final pathLines = outputLines.where((line) => line.contains('FOUND')).map((line) => line.split(':').first).toList();
+  return pathLines; 
 }
