@@ -14,7 +14,9 @@ class JsonFileStorage
 
   Future<File> get _localFile async 
   {
-    final directory = await getApplicationDocumentsDirectory();
+    final directory = await getApplicationCacheDirectory();
+    
+    debugPrint('$directory');
     
     return File('${directory.path}/$filename');
   }

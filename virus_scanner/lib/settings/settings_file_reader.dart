@@ -10,21 +10,19 @@ class SettingsFileStorage {
   SettingsFileStorage(this.filename);
 
   Future<File> get _localFile async {
-    final directory = await getApplicationDocumentsDirectory();
+    final directory = await getApplicationCacheDirectory();
     return File('${directory.path}/$filename');
   }
 
   Future<void> createFileIfNotExists() async {
     final file = await _localFile;
     if (!await file.exists()) {
-      final directory = await getApplicationDocumentsDirectory();
 
       final defaultSettings = Settings
       (
         switchLightAndDarkMode: false,
         themeColor: const Color(0xFF2196F3),
         language: 'en',
-        historyPath: directory.path,
       );
       await file.writeAsString(json.encode(defaultSettings.toJson()));
     }
@@ -65,7 +63,6 @@ class SettingsFileStorage {
           switchLightAndDarkMode: false,
           themeColor: const Color(0xFF2196F3),
           language: 'en',
-          historyPath: '',
         );
         await file.writeAsString(json.encode(defaultSettings.toJson()));
       }
