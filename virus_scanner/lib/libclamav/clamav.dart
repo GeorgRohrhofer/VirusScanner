@@ -92,12 +92,6 @@ Future<List<String>> scanMultipleFiles(String rootPath) async {
     String output = processResult.stdout;
     final lines = output.split('\n');
     return lines;
-
-    final pathRegex = RegExp(r'([a-zA-Z]:\\[^\s]+|\/[^\s]+)');
-
-    final pathLines = lines.where((line) => pathRegex.hasMatch(line)).map((line) => line.split(':').first).toList();
-
-    return pathLines; 
   }
 
   throw TypeError();
@@ -116,7 +110,7 @@ Future<List<String>> scanMultipleFilesLive(String rootPath, List<String> outputL
 
   await _process!.exitCode;
 
-  final pathLines = outputLines.where((line) => line.contains('FOUND')).map((line) => line.split(':').first).toList();
+  final pathLines = outputLines.where((line) => line.contains('FOUND')).map((line) => line.substring(0, line.lastIndexOf(':'))).toList();
   return pathLines; 
 }
 
@@ -183,6 +177,6 @@ Future<List<String>> scanMemoryLive(ScanMemoryOptions option, List<String> outpu
 
   await _process!.exitCode;
 
-  final pathLines = outputLines.where((line) => line.contains('FOUND')).map((line) => line.split(':').first).toList();
+  final pathLines = outputLines.where((line) => line.contains('FOUND')).map((line) => line.substring(0, line.lastIndexOf(':'))).toList();
   return pathLines; 
 }

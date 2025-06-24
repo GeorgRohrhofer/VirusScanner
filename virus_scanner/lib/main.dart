@@ -67,7 +67,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'ICVS - Inefficient ClamAV Scanner',
       theme: _myTheme,
       debugShowCheckedModeBanner: false,
       home: MyHomePage(
@@ -99,7 +99,8 @@ class _MyHomePageState extends State<MyHomePage> {
   String activeScan = '';
   JsonFileStorage fileReader = JsonFileStorage('scan_history.json');
   SettingsFileStorage settingsReader = SettingsFileStorage('settings.json');
-  final ScrollController _scanHistoryHorizontalController = ScrollController();
+  final ScrollController _scanHistoryHorizontalController = ScrollController(); 
+  final ScrollController _activeScanScrollController = ScrollController();
   ScanMemoryOptions memoryScanOption = ScanMemoryOptions.none;
 
   Settings? settings;
@@ -223,8 +224,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
     if (scanActive) {
       startScan();
+      setState(() {
+        activeScan = "";
+      });
     } else {
-      debugPrint('Scan cannot be aborted, lol :(');
+      stopLiveScanProcess();
     }
   }
 
@@ -244,7 +248,20 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _scanFile() async {
     String scanPath = currentScanPath;
-    final virus = await scanFile(scanPath);
+    final outputLines = <String>[];
+    final virus = await scanFileLive(scanPath, outputLines, () {
+      setState(() {
+        activeScan = outputLines.join("\n");
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _activeScanScrollController.animateTo(
+            _activeScanScrollController.position.maxScrollExtent,
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        });
+      });
+    });
     debugPrint('scan result: $virus');
 
     ScanHistory scanHistoryData = ScanHistory(
@@ -264,7 +281,20 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _scanDirectory() async {
     String scanPath = currentScanPath;
-    final virus = await scanMultipleFiles(scanPath);
+    final outputLines = <String>[];
+    final virus = await scanMultipleFilesLive(scanPath, outputLines, (){
+      setState(() {
+        activeScan = outputLines.join("\n");
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _activeScanScrollController.animateTo(
+            _activeScanScrollController.position.maxScrollExtent,
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        });
+      });
+    });
     bool wasInfected = true;
 
     String result;
@@ -297,7 +327,20 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _scanMemory() async {
-    final List<String> results = await scanMemory(memoryScanOption);
+    final outputLines = <String>[];
+    final List<String> results = await scanMemoryLive(memoryScanOption, outputLines, (){
+      setState(() {
+        activeScan = outputLines.join('\n');
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _activeScanScrollController.animateTo(
+            _activeScanScrollController.position.maxScrollExtent,
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        });
+      });
+    });
     debugPrint('Scan Result: $results');
 
     String actualResults = '';
@@ -592,7 +635,10 @@ class _MyHomePageState extends State<MyHomePage> {
                           border: Border.all(color: boxBorderColor),
                           borderRadius: BorderRadius.circular(5),
                         ),
-                        child: SingleChildScrollView(child: Text(activeScan)),
+                        child: SingleChildScrollView(
+                          controller: _activeScanScrollController,
+                          child: Text(activeScan)
+                        ),
                       ),
                     ),
                   ),
