@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flex_color_picker/flex_color_picker.dart'; // optional color picker package
+import 'package:virus_scanner/language.dart';
 import 'package:virus_scanner/settings/settingsclass.dart';
 import 'package:virus_scanner/settings/settings_file_reader.dart';  // Your Settings class
 
@@ -7,12 +8,14 @@ class SettingsPage extends StatefulWidget {
   final Settings? initialSettings;
   final SettingsFileStorage storage;
   final ValueChanged<Settings> onSettingsChanged;
+  final Language language;
 
   const SettingsPage({
     super.key,
     this.initialSettings,
     required this.storage,
     required this.onSettingsChanged,
+    required this.language,
   });
 
   @override
@@ -81,14 +84,14 @@ class SettingsPageState extends State<SettingsPage> {
         themeColor == null ||
         language == null) {
       return Scaffold(
-        appBar: AppBar(title: Text('Settings')),
+        appBar: AppBar(title: Text(widget.language.settingsPageTitle)),
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Settings'),
+        title: Text(widget.language.settingsPageTitle),
         backgroundColor: themeColor,
       ),
       body: Padding(
@@ -96,7 +99,7 @@ class SettingsPageState extends State<SettingsPage> {
         child: Column(
           children: [
             SwitchListTile(
-              title: Text('Light/Dark Mode'),
+              title: Text(widget.language.lightDarkMode),
               value: switchLightAndDarkMode!,
               onChanged: (val) {
                 setState(() {
@@ -106,7 +109,7 @@ class SettingsPageState extends State<SettingsPage> {
               },
             ),
             ListTile(
-              title: Text('Theme Color'),
+              title: Text(widget.language.themeColor),
               trailing: ColorIndicator(
                 width: 30,
                 height: 30,
@@ -115,7 +118,7 @@ class SettingsPageState extends State<SettingsPage> {
                   Color? picked = await showColorPickerDialog(
                     context,
                     themeColor!,
-                    title: const Text('Select Theme Color'),
+                    title: Text(widget.language.selectThemeColor),
                     enableShadesSelection: true,
                     showColorName: true,
                     showColorCode: true,
@@ -130,7 +133,7 @@ class SettingsPageState extends State<SettingsPage> {
               ),
             ),
             DropdownButtonFormField<String>(
-              decoration: InputDecoration(labelText: 'Language'),
+              decoration: InputDecoration(labelText: widget.language.language),
               value: language,
               items: languages
                   .map((lang) => DropdownMenuItem(
@@ -141,6 +144,7 @@ class SettingsPageState extends State<SettingsPage> {
               onChanged: (val) {
                 if (val != null) {
                   setState(() {
+                    widget.language.changeLanguage(val);
                     language = val;
                   });
                   _saveSettings();

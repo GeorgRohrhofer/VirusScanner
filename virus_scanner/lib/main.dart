@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:virus_scanner/json_reader_and_filepicker/filereader.dart';
 import 'package:virus_scanner/json_reader_and_filepicker/scan_history.dart';
+import 'package:virus_scanner/language.dart';
 import 'dart:io';
 import 'libclamav/clamav.dart';
 import 'package:window_manager/window_manager.dart';
@@ -102,6 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final ScrollController _scanHistoryHorizontalController = ScrollController(); 
   final ScrollController _activeScanScrollController = ScrollController();
   ScanMemoryOptions memoryScanOption = ScanMemoryOptions.none;
+  Language language = Language('en');
 
   Settings? settings;
 
@@ -125,6 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final loadedSettings = await settingsReader.readSettings();
     setState(() {
     settings = loadedSettings;
+    language.changeLanguage(settings!.language);
 
     final Color seedColor = settings!.themeColor;
 
@@ -172,6 +175,7 @@ class _MyHomePageState extends State<MyHomePage> {
       MaterialPageRoute(
         builder: (context) => SettingsPage(
           initialSettings: settings!,
+          language: language,
           storage: settingsReader,
           onSettingsChanged: (newSettings) async {
             await settingsReader.writeSettings(newSettings);
@@ -519,7 +523,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           borderRadius: BorderRadius.all(Radius.circular(5)),
                         ),
                       ),
-                      child: const Text('File'),
+                      child: Text(language.file),
                     ),
                   ),
                   SizedBox(
@@ -539,7 +543,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           borderRadius: BorderRadius.all(Radius.circular(5)),
                         ),
                       ),
-                      child: const Text('Directory'),
+                      child: Text(language.directory),
                     ),
                   ),
                   SizedBox(
@@ -559,7 +563,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           borderRadius: BorderRadius.all(Radius.circular(5)),
                         ),
                       ),
-                      child: const Text('Memory'),
+                      child: Text(language.memory),
                     ),
                   ),
                 ],
@@ -599,13 +603,13 @@ class _MyHomePageState extends State<MyHomePage> {
                           children: [
                             ElevatedButton(
                               onPressed: () => pathButtonPressed(),
-                              child: const Text('Choose Path'),
+                              child: Text(language.choosePath),
                             ),
                             currentButtonState == ButtonState.memory
                                 ? SizedBox(height: 14)
                                 : currentScanPath.isEmpty
-                                ? const Text(
-                                    'No Path Selected',
+                                ? Text(
+                                    language.noPathSelected,
                                     style: TextStyle(fontSize: 10),
                                   )
                                 : Text(
@@ -621,8 +625,8 @@ class _MyHomePageState extends State<MyHomePage> {
                         ? () => scanButtonPressed()
                         : null,
                     child: scanActive
-                        ? const Text('Abort Scan')
-                        : const Text('Start Scan'),
+                        ? Text(language.abortButton)
+                        : Text(language.scanButton),
                   ),
                   SizedBox(height: 10),
                   scanActive
@@ -630,7 +634,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       : SizedBox(height: 36),
                   Align(
                     alignment: Alignment.topLeft,
-                    child: Text('Active Scan:'),
+                    child: Text(language.activeScanLabel),
                   ),
                   Expanded(
                     child: Padding(
@@ -657,7 +661,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: [
                   Align(
                     alignment: Alignment.topLeft,
-                    child: Text('Scan History:'),
+                    child: Text(language.scanHistoryLabel),
                   ),
                   Expanded(
                     child: Container(
@@ -685,7 +689,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: Align(
                       alignment: Alignment.topRight,
                       child: Tooltip(
-                        message: 'Permanently Delete History',
+                        message: language.deleteHistoryToolTip,
                         child: SizedBox(
                           width: 40,
                           child: ElevatedButton(
@@ -711,7 +715,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     width: 30,
                     height: 30,
                     child: Tooltip(
-                      message: 'Open Settings',
+                      message: language.openSettingsToolTip,
                       child: ElevatedButton(
                         onPressed: () => settingsButtonPressed(),
                         style: ElevatedButton.styleFrom(
