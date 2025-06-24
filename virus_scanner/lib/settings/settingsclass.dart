@@ -11,13 +11,11 @@ class Settings {
   final Color themeColor;
 
   final String language;
-  final String historyPath;
 
   Settings({
     required this.switchLightAndDarkMode,
     required this.themeColor,
     required this.language,
-    required this.historyPath,
   });
 
   factory Settings.fromJson(Map<String, dynamic> json) =>

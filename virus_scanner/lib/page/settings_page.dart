@@ -1,11 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flex_color_picker/flex_color_picker.dart'; // optional color picker package
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:virus_scanner/settings/settingsclass.dart';
 import 'package:virus_scanner/settings/settings_file_reader.dart';  // Your Settings class
-import 'package:virus_scanner/json_reader_and_filepicker/filereader.dart';  // Your JsonFileStorage class
 
 class SettingsPage extends StatefulWidget {
   final Settings? initialSettings;
@@ -28,11 +24,8 @@ class SettingsPageState extends State<SettingsPage> {
   Color? themeColor;
   String? language;
   bool isLoading = true;
-  TextEditingController? historyPathController;
 
-  late JsonFileStorage scanStorage; // Scan history storage
-
-  final List<String> languages = ['en', 'de', 'fr', 'es'];
+  final List<String> languages = ['en', 'de'];
 
   @override
   void initState() {
@@ -47,57 +40,38 @@ class SettingsPageState extends State<SettingsPage> {
         Settings(
           switchLightAndDarkMode: false,
           themeColor: Colors.blue,
-          language: 'en',
-          historyPath: '',  // fallback, should not be empty ideally
+          language: 'de',
         );
 
     setState(() {
       switchLightAndDarkMode = settings.switchLightAndDarkMode;
       themeColor = settings.themeColor;
       language = settings.language;
-      historyPathController = TextEditingController(text: settings.historyPath);
       isLoading = false;
     });
-
-    await _initScanStorage(settings.historyPath);
   }
 
-  Future<void> _initScanStorage(String historyPath) async {
-    if (historyPath.isEmpty) {
-      debugPrint('History path is empty, scanStorage not initialized.');
-      return;
-    }
-
-    final dir = Directory(historyPath);
-
-   /* final scanHistoryFilePath = p.join(historyPath, 'scan_history.json');
-    scanStorage = JsonFileStorage(scanHistoryFilePath);
-    debugPrint('ScanStorage initialized at: $scanHistoryFilePath'); */
-  }
 
   Future<void> _saveSettings() async {
     if (switchLightAndDarkMode == null ||
         themeColor == null ||
-        language == null ||
-        historyPathController == null) return;
+        language == null)
+      {
+        return;
+      }
 
     final newSettings = Settings(
       switchLightAndDarkMode: switchLightAndDarkMode!,
       themeColor: themeColor!,
-      language: language!,
-      historyPath: historyPathController!.text,
+      language: language!
     );
 
     await widget.storage.writeSettings(newSettings);
     widget.onSettingsChanged(newSettings);
-
-    // Update scanStorage if historyPath changed
-    await _initScanStorage(newSettings.historyPath);
   }
 
   @override
   void dispose() {
-    historyPathController?.dispose();
     super.dispose();
   }
 
@@ -105,8 +79,7 @@ class SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     if (switchLightAndDarkMode == null ||
         themeColor == null ||
-        language == null ||
-        historyPathController == null) {
+        language == null) {
       return Scaffold(
         appBar: AppBar(title: Text('Settings')),
         body: Center(child: CircularProgressIndicator()),
@@ -174,11 +147,6 @@ class SettingsPageState extends State<SettingsPage> {
                 }
               },
             ),
-            /*TextFormField(
-              controller: historyPathController,
-              decoration: InputDecoration(labelText: 'History Path'),
-              onFieldSubmitted: (_) => _saveSettings(),
-            ),*/
           ],
         ),
       ),
