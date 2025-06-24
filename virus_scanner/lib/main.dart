@@ -298,7 +298,13 @@ class _MyHomePageState extends State<MyHomePage> {
     bool wasInfected = true;
 
     String result;
-    String bruh = virus[0];
+    String bruh;
+    if (virus.isEmpty){
+      bruh = '\r';
+    }
+    else{
+      bruh = virus[0];
+    }
     debugPrint(bruh);
     if (bruh == "\r") {
       result = 'No Viruses Detected';
