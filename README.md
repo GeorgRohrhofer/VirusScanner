@@ -8,7 +8,7 @@
 
 ---
 
-## 📥 Step 1: Download the Installer
+## 📥 Step 1: Download the ClamAV-Installer
 
 1. Go to the official ClamAV downloads page:
    👉 [https://www.clamav.net/downloads](https://www.clamav.net/downloads)
