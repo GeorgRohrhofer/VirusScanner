@@ -31,12 +31,12 @@ void main() async {
     exit(1);
   }
 
-  // if (!isElevated()) {
-  //   relaunchAsAdmin();
-  //   exit(0);
-  // }
+  if (!isElevated()) {
+    relaunchAsAdmin();
+    exit(0);
+  }
 
-  // updateDatabase();
+  updateDatabase();
 
   //debugPrint('Starting Scan...');
   //debugPrint('Virus detected: ${await scanFile('..\\eicar.com')}');
