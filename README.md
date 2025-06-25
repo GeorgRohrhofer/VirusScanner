@@ -4,7 +4,7 @@
 > The file `eicar.com` is a specially designed test file recognized by antivirus scanners. It is used to verify that the antivirus is working properly and is **100% safe and harmless**.  
 > You can safely use this file to test your ICVS-AntiVirus installation. 
 
-# 🛡️ ClamAV for Windows – Installation Guide (Installer Version)
+# 🛡️ Setup Guide for Windows – Installation Guide (Installer Version)
 
 ---
 
@@ -97,6 +97,14 @@ freshclam.exe
 ```
 
 This is automatically run when starting ICVS
+
+## 💿 Step 6: Download and run ICVS
+
+Download the windows release from [Latest Release](https://github.com/GeorgRohrhofer/VirusScanner/releases/latest).
+
+Unzip the zip file and run virus_scanner.exe.
+
+Have fun!
 
 ## 🔗 Official Resources
 
