@@ -2,7 +2,7 @@
 
 > **💡 Test File Notice:**  
 > The file `eicar.com` is a specially designed test file recognized by antivirus scanners. It is used to verify that the antivirus is working properly and is **100% safe and harmless**.  
-> You can safely use this file to test your ClamAV installation. 
+> You can safely use this file to test your ICVS-AntiVirus installation. 
 
 # 🛡️ ClamAV for Windows – Installation Guide (Installer Version)
 
