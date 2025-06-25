@@ -1,3 +1,5 @@
+GitHub-Repository: https://github.com/GeorgRohrhofer/VirusScanner
+
 # ICVS – Inefficient ClamAV Scanner
 
 > **💡 Test File Notice:**  
