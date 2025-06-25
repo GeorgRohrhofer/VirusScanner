@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as path;
 
 class Language{
     String scanButton = '';
@@ -40,7 +41,10 @@ class Language{
 
         // Change language by reloading the file
         try {
-            var lines = File(filePath).readAsLinesSync();
+            final exeDir = File(Platform.resolvedExecutable).parent;
+            final assetPath = path.join(exeDir.path, 'data', 'flutter_assets', filePath);
+
+            var lines = File(assetPath).readAsLinesSync(); 
             scanButton = lines[0];
             abortButton = lines[1];
             file = lines[2];

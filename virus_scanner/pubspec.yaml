@@ -43,6 +43,7 @@ dependencies:
   win32: ^5.14.0
   ffi: ^2.1.4
   flex_color_picker: ^3.0.0
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:
@@ -62,6 +63,9 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  assets:
+    - german.language
+    - english.language
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
